@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hệ thống Quản lý Hóa đơn Rủi ro V4.1 - Nội bộ Cơ quan Thuế</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-badge">RR</div>
+    <div>
+      <div class="brand-title">QUẢN LÝ HÓA ĐƠN RỦI RO</div>
+      <div class="brand-sub">Xác thực Máy Nội bộ • V4.1 Pro</div>
+    </div>
+  </div>
+
+  <!-- KHỐI XÁC THỰC TỰ ĐỘNG THEO ACCOUNT MÁY NỘI BỘ -->
+  <div class="auth-card">
+    <div class="auth-header">🔒 XÁC THỰC ACCOUNT MÁY NỘI BỘ</div>
+    <div class="machine-chip" id="machineIdentityChip">Đang nhận diện Account máy...</div>
+
+    <label for="officerNameInput">Họ tên / Mã công chức (Tự nhận diện):</label>
+    <input type="text" id="officerNameInput" placeholder="Gõ mã/tên công chức..." onchange="saveLocalProfile()">
+
+    <label for="deptRoleSelect">Bộ phận công tác (Phân luồng nghiệp vụ):</label>
+    <select id="deptRoleSelect" onchange="onRoleChanged()">
+      <option value="PHONG_QLHT">Phòng Quản lý Doanh nghiệp 1 / QLHTDN</option>
+      <option value="PHONG_KT">Phòng Kiểm tra (Tra cứu & Xem kết quả)</option>
+    </select>
+  </div>
+
+  <!-- TRẠNG THÁI GIẢ LẬP / KẾT NỐI \\qng-pthieu10\SharePdf -->
+  <div class="sharepdf-box">
+    <div style="font-weight:800; color:#34d399; margin-bottom:2px;">● KHO TÀI LIỆU & DỮ LIỆU .DB:</div>
+    <code id="uncPathLabel">\\\\qng-pthieu10\\SharePdf</code>
+    <div id="pdfCountLabel" style="margin-top:5px;">Đang kiểm tra kho SharePdf...</div>
+  </div>
+
+  <nav class="nav-menu">
+    <button class="nav-btn active-mod0" id="btnModDashboard" onclick="switchModule('mod_dashboard', this, 'active-mod0')">
+      <span class="dot" style="background:#38bdf8;"></span>
+      <span>📊 Bảng điều khiển Tổng quan</span>
+    </button>
+
+    <div class="nav-section-lbl" id="navGroupQlhtLbl" style="margin-top:6px;">Nghiệp vụ Quản lý Doanh nghiệp</div>
+    <button class="nav-btn" id="btnModTh" onclick="switchModule('mod_th', this, 'active-mod2')">
+      <span class="dot" style="background:#34d399;"></span>
+      <span>1. Tiếp nhận Văn bản Cảnh báo</span>
+    </button>
+    <button class="nav-btn" id="btnModDsrr" onclick="switchModule('mod_dsrr', this, 'active-mod1')">
+      <span class="dot" style="background:#38bdf8;"></span>
+      <span>2. Theo dõi & Cập nhật Kết quả</span>
+    </button>
+
+    <div class="nav-section-lbl" style="margin-top:8px;">Nghiệp vụ Tra cứu & Phối hợp</div>
+    <button class="nav-btn" id="btnModInspect" onclick="switchModule('mod_inspect', this, 'active-mod3')">
+      <span class="dot" style="background:#c084fc;"></span>
+      <span>3. Tra cứu Kết quả (Phòng Kiểm tra)</span>
+    </button>
+    <button class="nav-btn" id="btnModShare" onclick="switchModule('mod_sharepdf', this, 'active-mod2')">
+      <span class="dot" style="background:#fbbf24;"></span>
+      <span>4. Kho Tệp PDF & Sao lưu Dữ liệu</span>
+    </button>
+
+    <div class="nav-section-lbl" style="margin-top:8px;">Hệ thống & Cấu hình Quản trị</div>
+    <button class="nav-btn" id="btnModAdmin" onclick="openAdminModule(this)">
+      <span class="dot" style="background:#f43f5e;"></span>
+      <span>⚙️ 5. Quản trị Hệ thống & Nhật ký</span>
+    </button>
+  </nav>
+
+  <div class="owner-footer">
+    <span>Bảo mật LAN • Tự động Đồng bộ CSDL</span>
+  </div>
+</aside>
+
+<main class="workspace">
+  <header class="topbar">
+    <div class="topbar-title">
+      <span id="moduleHeaderTitle">Bảng Điều Khiển Trung Tâm & Tổng Hợp Dữ Liệu Hóa Đơn Rủi Ro</span>
+      <span class="role-ribbon role-qlht" id="activeRoleBadge">Phòng Quản lý Doanh nghiệp 1</span>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <div id="syncQueueBadge" class="sync-badge sync-badge-clean" onclick="triggerManualSync()" title="Trạng thái hàng chờ ghi CSDL dùng chung. Bấm để kích hoạt đồng bộ ngay.">
+        <span class="sync-dot"></span>
+        <span id="syncQueueText">CSDL Dùng Chung: Đồng bộ</span>
+      </div>
+      <button class="btn btn-outline" onclick="refreshData()">🔄 Làm mới Dữ liệu</button>
+      <button class="btn btn-success" onclick="exportStandardExcel()">📊 Xuất Báo Cáo Excel Chuẩn</button>
+      <!-- WIDGET ĐỊNH DANH & ĐĂNG NHẬP GÓC TRÊN BÊN PHẢI -->
+      <div id="cornerAuthContainer" class="corner-auth-widget"></div>
+    </div>
+  </header>
+
+  <div class="content-area">
+
+    <!-- ==================== TRANG CHỦ: BẢNG ĐIỀU KHIỂN TRUNG TÂM (DASHBOARD TỔNG HỢP) ==================== -->
+    <section id="mod_dashboard" class="module-pane active">
+      <!-- 1. BANNER CHÀO MỪNG & THÔNG TIN HỆ THỐNG -->
+      <div class="dashboard-welcome-banner">
+        <div class="welcome-text">
+          <h2><span>📊</span> Bảng Điều Khiển Trung Tâm & Tổng Hợp Rủi Ro Hóa Đơn</h2>
+          <p>Hệ thống giám sát, cảnh báo và điều hành tiến độ giải trình doanh nghiệp có dấu hiệu rủi ro cao về hóa đơn điện tử toàn cơ quan thuế.</p>
+        </div>
+        <div class="welcome-meta-pills">
+          <div class="welcome-pill"><span>📁 Kho lưu trữ:</span> <code style="color:#67e8f9;">\\qng-pthieu10\SharePdf</code></div>
+          <div class="welcome-pill"><span>🔒 CSDL:</span> <b style="color:#86efac;">SQLite Đồng bộ</b></div>
+          <div class="welcome-pill"><span>📅 Hôm nay:</span> <span id="dashTodayDate">--/--/----</span></div>
+        </div>
+      </div>
+
+      <!-- 2. CỤM CÁC NÚT THAO TÁC NHANH (QUICK ACTIONS) -->
+      <div class="quick-actions-section">
+        <div class="quick-actions-title">
+          <span>⚡ THAO TÁC NGHIỆP VỤ NHANH:</span>
+          <span style="font-weight:normal; text-transform:none; color:#64748b;">(Chọn tác vụ để chuyển thẳng đến màn hình thực hiện)</span>
+        </div>
+        <div class="quick-actions-grid">
+          <!-- NÚT 1: NHẬP VĂN BẢN RỦI RO -->
+          <div class="quick-action-card card-action-green" onclick="actionGoToWarningInput()" title="Mở phân hệ Tiếp nhận để nhập công văn/thông báo cảnh báo rủi ro mới">
+            <div class="action-icon-wrap">📥</div>
+            <div class="action-card-content">
+              <div class="action-card-header">
+                <div class="action-card-name">Nhập văn bản rủi ro</div>
+                <span class="action-arrow">➔</span>
+              </div>
+              <div class="action-card-desc">Tiếp nhận thông báo, công văn cảnh báo từ cơ quan thuế khác & tự động trích yếu</div>
+            </div>
+          </div>
+
+          <!-- NÚT 2: CẬP NHẬT KẾT QUẢ GIẢI TRÌNH -->
+          <div class="quick-action-card card-action-blue" onclick="actionGoToDsrrUpdate()" title="Mở danh sách để cập nhật kết quả xử lý và phân loại hóa đơn">
+            <div class="action-icon-wrap">✍️</div>
+            <div class="action-card-content">
+              <div class="action-card-header">
+                <div class="action-card-name">Cập nhật kết quả giải trình</div>
+                <span class="action-arrow">➔</span>
+              </div>
+              <div class="action-card-desc">Ghi nhận tiến độ giải trình, số thông báo và phân loại số liệu 4 nhóm hóa đơn</div>
+            </div>
+          </div>
+
+          <!-- NÚT 3: ĐÍNH KÈM VĂN BẢN -->
+          <div class="quick-action-card card-action-amber" onclick="actionGoToAttachFile()" title="Mở kho tệp PDF để quản lý file văn bản kết quả và tệp cảnh báo">
+            <div class="action-icon-wrap">📎</div>
+            <div class="action-card-content">
+              <div class="action-card-header">
+                <div class="action-card-name">Đính kèm văn bản</div>
+                <span class="action-arrow">➔</span>
+              </div>
+              <div class="action-card-desc">Tải lên hoặc quét tài liệu PDF kết quả lưu vào thư mục mạng nội bộ SharePdf</div>
+            </div>
+          </div>
+
+          <!-- NÚT 4: TRA CỨU DANH SÁCH RỦI RO -->
+          <div class="quick-action-card card-action-purple" onclick="actionGoToInspect()" title="Tra cứu nhanh mã số thuế, tên công ty và hồ sơ kiểm tra">
+            <div class="action-icon-wrap">🔍</div>
+            <div class="action-card-content">
+              <div class="action-card-header">
+                <div class="action-card-name">Tra cứu danh sách rủi ro</div>
+                <span class="action-arrow">➔</span>
+              </div>
+              <div class="action-card-desc">Tìm kiếm chi tiết mã số thuế, doanh nghiệp bán rủi ro, tải xem file PDF kết quả</div>
+            </div>
+          </div>
+
+          <!-- NÚT 5: NHẮC VIỆC OUTLOOK -->
+          <div class="quick-action-card card-action-rose" onclick="actionOpenReminder()" title="Rà soát các hồ sơ chậm tiến độ và gửi email Outlook cho cán bộ">
+            <div class="action-icon-wrap">📧</div>
+            <div class="action-card-content">
+              <div class="action-card-header">
+                <div class="action-card-name">Nhắc việc qua Outlook</div>
+                <span class="badge" id="dashOverdueBadge" style="background:#fee2e2; color:#b91c1c; font-size:11px; font-weight:800;">0 chậm</span>
+              </div>
+              <div class="action-card-desc">Đôn đốc hồ sơ rủi ro quá hạn giải trình bằng email soạn sẵn gửi tới cán bộ thuế</div>
+            </div>
+          </div>
+
+          <!-- NÚT 6: XUẤT BÁO CÁO EXCEL -->
+          <div class="quick-action-card card-action-slate" onclick="exportStandardExcel()" title="Tải xuống tệp Excel chuẩn chứa cả 2 sheet">
+            <div class="action-icon-wrap">📊</div>
+            <div class="action-card-content">
+              <div class="action-card-header">
+                <div class="action-card-name">Xuất báo cáo Excel</div>
+                <span class="action-arrow">➔</span>
+              </div>
+              <div class="action-card-desc">Kết xuất toàn bộ dữ liệu 2 phân hệ ra file Excel chuẩn đầy đủ chi tiết cột</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. THẺ CHỈ SỐ TỔNG QUAN & BIỂU ĐỒ TRỰC QUAN TIẾN ĐỘ -->
+      <div style="font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">
+        📈 TỔNG HỢP TIẾN ĐỘ HỒ SƠ RỦI RO TOÀN HỆ THỐNG:
+      </div>
+      <div class="dashboard-kpi-grid">
+        <!-- TỔNG SỐ HỒ SƠ -->
+        <div class="dash-kpi-card" style="border-left:4px solid #2563eb; cursor:pointer;" onclick="actionGoToDsrrUpdate('ALL')" title="Bấm để xem tất cả">
+          <div class="dk-head">
+            <span class="dk-title">TỔNG HỒ SƠ RỦI RO</span>
+            <span style="font-size:18px;">📁</span>
+          </div>
+          <div class="dk-num" id="dashKpiTotal" style="color:#1d4ed8;">0</div>
+          <div class="dk-sub" id="dashKpiTotalSub">Đang tổng hợp dữ liệu...</div>
+        </div>
+
+        <!-- CHƯA XỬ LÝ -->
+        <div class="dash-kpi-card" style="border-left:4px solid #ef4444; cursor:pointer;" onclick="actionGoToDsrrUpdate('Chưa xử lý')" title="Bấm để lọc hồ sơ chưa xử lý">
+          <div class="dk-head">
+            <span class="dk-title">CHƯA XỬ LÝ</span>
+            <span style="font-size:18px;">🔴</span>
+          </div>
+          <div class="dk-num" id="dashKpiPending" style="color:#dc2626;">0</div>
+          <div class="dk-sub" id="dashKpiPendingSub">Chưa ban hành thông báo</div>
+        </div>
+
+        <!-- ĐANG XỬ LÝ -->
+        <div class="dash-kpi-card" style="border-left:4px solid #f59e0b; cursor:pointer;" onclick="actionGoToDsrrUpdate('Đang xử lý')" title="Bấm để lọc hồ sơ đang xử lý">
+          <div class="dk-head">
+            <span class="dk-title">ĐANG XỬ LÝ</span>
+            <span style="font-size:18px;">🟡</span>
+          </div>
+          <div class="dk-num" id="dashKpiDoing" style="color:#d97706;">0</div>
+          <div class="dk-sub" id="dashKpiDoingSub">Đang theo dõi giải trình</div>
+        </div>
+
+        <!-- QUÁ HẠN THÔNG BÁO GIẢI TRÌNH -->
+        <div class="dash-kpi-card" style="border-left:4px solid #b91c1c; cursor:pointer;" onclick="actionGoToDsrrUpdate('OVERDUE')" title="Bấm để lọc hồ sơ quá hạn thông báo giải trình">
+          <div class="dk-head">
+            <span class="dk-title">QUÁ HẠN GIẢI TRÌNH</span>
+            <span style="font-size:18px;">⏰</span>
+          </div>
+          <div class="dk-num" id="dashKpiOverdue" style="color:#991b1b;">0</div>
+          <div class="dk-sub" id="dashOverdueBadge">Quá thời hạn Thông báo giải trình</div>
+        </div>
+
+        <!-- ĐÃ HOÀN THÀNH -->
+        <div class="dash-kpi-card" style="border-left:4px solid #10b981; cursor:pointer;" onclick="actionGoToDsrrUpdate('Đã xử lý')" title="Bấm để lọc hồ sơ đã xử lý">
+          <div class="dk-head">
+            <span class="dk-title">ĐÃ HOÀN THÀNH</span>
+            <span style="font-size:18px;">🟢</span>
+          </div>
+          <div class="dk-num" id="dashKpiDone" style="color:#059669;">0</div>
+          <div class="dk-sub" id="dashKpiDoneRate">Tỷ lệ hoàn thành: 0%</div>
+        </div>
+
+        <!-- ĐÃ CÓ TỆP KẾT QUẢ -->
+        <div class="dash-kpi-card" style="border-left:4px solid #7c3aed; cursor:pointer;" onclick="actionGoToDsrrUpdate('HAS_PDF')" title="Bấm để lọc hồ sơ có tệp PDF">
+          <div class="dk-head">
+            <span class="dk-title">TÀI LIỆU KẾT QUẢ (PDF)</span>
+            <span style="font-size:18px;">📄</span>
+          </div>
+          <div class="dk-num" id="dashKpiHasPdf" style="color:#6d28d9;">0</div>
+          <div class="dk-sub">Đã lưu trong kho chia sẻ</div>
+        </div>
+      </div>
+
+      <!-- BIỂU ĐỒ TRỰC QUAN TIẾN ĐỘ & PHÂN BỔ HỒ SƠ TOÀN HỆ THỐNG -->
+      <div class="dash-charts-grid" id="dashChartsContainer">
+        <!-- BIỂU ĐỒ VÀNH KHĂN: TIẾN ĐỘ TOÀN HỆ THỐNG -->
+        <div class="dash-chart-card">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <span>📊 Tỷ Lệ Hoàn Thành & Tiến Độ Giải Trình</span>
+            </div>
+            <span class="badge badge-done" id="chartTotalBadge">0 hồ sơ</span>
+          </div>
+          <div class="donut-layout">
+            <div class="donut-svg-wrap">
+              <svg id="donutSvg" width="160" height="160" viewBox="0 0 160 160"></svg>
+            </div>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </div>
+
+        <!-- BIỂU ĐỒ CỘT NGANG: TÌNH HÌNH PHÂN CÔNG & XỬ LÝ THEO CÁN BỘ THUẾ -->
+        <div class="dash-chart-card" id="cardOfficerBars">
+          <div class="chart-card-head">
+            <div class="chart-card-title">
+              <span>👥 Phân Bổ Tiến Độ Theo Từng Cán Bộ Thuế</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:11.5px; color:#64748b;">(🟢 Đã xong • 🟡 Đang làm • ⏰ Quá hạn TB • ⚪ Chưa làm)</span>
+              <button class="btn btn-outline" id="btnToggleMaxOfficerCard" onclick="toggleMaxOfficerBars()" style="padding:2px 8px; font-size:11px;" title="Mở rộng toàn khung để quan sát tất cả cán bộ">⛶ Mở rộng khung</button>
+            </div>
+          </div>
+          <div class="officer-bars-wrap" id="dashOfficerBars">
+            <div style="text-align:center; padding:30px; color:#64748b;">Đang tải biểu đồ cán bộ...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. TỔNG HỢP SỐ LIỆU 4 NHÓM HÓA ĐƠN -->
+      <div style="font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">
+        📑 TỔNG HỢP SỐ LIỆU 4 NHÓM HÓA ĐƠN GIẢI TRÌNH:
+      </div>
+      <div class="invoice-group-strip" id="dashInvoiceGroupStrip"></div>
+
+      <!-- 5. DANH SÁCH HỒ SƠ RỦI RO MỚI TIẾP NHẬN / CẦN CHÚ Ý GẤP (MỞ RỘNG TOÀN KHUNG) -->
+      <div class="panel panel-amber" style="margin-top:18px;">
+        <div class="panel-header">
+          <span>⚡ Hồ Sơ Cần Chú Ý / Tiếp Nhận Gần Đây Cần Xử Lý</span>
+          <button class="btn btn-outline" style="padding:4px 10px; font-size:12px;" onclick="actionGoToDsrrUpdate()">Xem toàn bộ danh sách [Bước 2]</button>
+        </div>
+        <div class="table-wrap" style="max-height:360px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:130px;">Mã số thuế</th>
+                <th style="width:230px;">Tên Người nộp thuế</th>
+                <th style="width:180px;">Công văn đến</th>
+                <th style="width:150px;">Cán bộ phụ trách</th>
+                <th>Quá trình & Hạn giải trình (+10 ngày)</th>
+                <th style="width:120px; text-align:center;">Trạng thái</th>
+                <th style="width:160px; text-align:center;">Tài liệu & Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyDashRecent">
+              <tr><td colspan="6" style="text-align:center; padding:20px; color:#64748b;">Đang tải dữ liệu hồ sơ...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== BƯỚC 1: TIẾP NHẬN THÔNG BÁO RỦI RO ==================== -->
+    <section id="mod_th" class="module-pane">
+      <!-- 1.1: CÔNG CỤ NẠP NHANH TỪ PDF / EXCEL -->
+      <div class="step-card" style="background:#ecfdf5; border-color:#6ee7b7;">
+        <div class="step-title" style="color:#065f46;">
+          <span class="step-num" style="background:#059669;">1</span>
+          <span>Công cụ nạp nhanh: Quét tệp PDF trong kho dữ liệu hoặc Nhập từ tệp Excel Quản lý văn bản</span>
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label for="selectExistingSharePdf">Chọn tệp PDF có sẵn trong kho dữ liệu nội bộ:</label>
+            <div style="display:flex; gap:6px;">
+              <select id="selectExistingSharePdf" style="flex:1; background:#fff;"></select>
+              <button class="btn btn-success" onclick="scanSelectedSharePdf()">Quét PDF</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="pdfScanInput">Hoặc tải tệp PDF từ máy tính (Tự động lưu vào kho chia sẻ):</label>
+            <input type="file" id="pdfScanInput" accept=".pdf" style="background:#fff;" onchange="handleScanPdf(this)">
+          </div>
+          <div class="form-group">
+            <label for="excel7ColInput">Hoặc nạp danh sách từ tệp Excel kết xuất từ Hệ thống Quản lý văn bản:</label>
+            <input type="file" id="excel7ColInput" accept=".xlsx,.xls" style="background:#fff;" onchange="handleImportExcel7Cols(this)">
+          </div>
+        </div>
+      </div>
+
+      <!-- 1.2: FORM TIẾP NHẬN ĐẦU VÀO CẢNH BÁO & ĐỒNG BỘ QLDN1 -->
+      <div class="step-card" style="background:#ffffff; border-color:#93c5fd;">
+        <div class="step-title" style="color:#1e40af;">
+          <span class="step-num" style="background:#2563eb;">2</span>
+          <span>Tiếp nhận Thông báo Rủi ro (Tự động tạo trích yếu công văn và chuyển tiếp sang Danh sách theo dõi)</span>
+        </div>
+
+        <div class="form-grid-4" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label for="th_so_kh" style="color:#1e40af;">Số ký hiệu văn bản (*)</label>
+            <input type="text" id="th_so_kh" placeholder="VD: 6526/TCS2-QLDN1" oninput="updateCongVanPreview()">
+          </div>
+          <div class="form-group">
+            <label for="th_ngay_vb" style="color:#1e40af;">Ngày tháng văn bản (*)</label>
+            <input type="text" id="th_ngay_vb" placeholder="dd/mm/yyyy" oninput="updateCongVanPreview()">
+          </div>
+          <div class="form-group">
+            <label for="th_noi_gui" style="color:#1e40af;">Cơ quan thuế gửi văn bản (*)</label>
+            <input type="text" id="th_noi_gui" placeholder="VD: Thuế cơ sở 2 TP.HCM" oninput="updateCongVanPreview()">
+          </div>
+          <div class="form-group">
+            <label>Số đến văn bản / Ngày đến / Hạn xử lý</label>
+            <div style="display:flex; gap:4px;">
+              <input type="text" id="th_so_den" placeholder="Số đến" style="width:34%;">
+              <input type="text" id="th_ngay_den" placeholder="Ngày đến" style="width:33%;">
+              <input type="text" id="th_han_xl" placeholder="Hạn xử lý" style="width:33%;">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid-3" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label for="th_mst_rr" style="color:#dc2626;">Mã số thuế Doanh nghiệp có dấu hiệu rủi ro (Bên bán) (*)</label>
+            <input type="text" id="th_mst_rr" placeholder="Nhập mã số thuế bên bán có dấu hiệu rủi ro...">
+          </div>
+          <div class="form-group">
+            <label for="th_ten_rr">Tên Doanh nghiệp có dấu hiệu rủi ro & Cơ quan Công an (nếu có)</label>
+            <div style="display:flex; gap:6px;">
+              <input type="text" id="th_ten_rr" placeholder="Tên doanh nghiệp rủi ro..." style="flex:1;">
+              <input type="text" id="th_cong_an" placeholder="Cơ quan Công an (nếu có)" style="width:170px;">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="th_ve_viec">Nội dung sự việc (*)</label>
+            <input type="text" id="th_ve_viec" value="Người nộp thuế bán trái phép hóa đơn">
+          </div>
+        </div>
+
+        <div class="form-grid-2" style="background:#f8fafc; padding:10px 12px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:12px;">
+          <div class="form-group">
+            <label for="th_cv_preview">Trích yếu tên công văn (Hệ thống tự động tạo theo mẫu chuẩn):</label>
+            <input type="text" id="th_cv_preview" readonly style="background:#e2e8f0; color:#0f172a; font-weight:800;">
+          </div>
+          <div class="form-group">
+            <label for="th_pdf_name">Tệp PDF đính kèm trong kho lưu trữ nội bộ:</label>
+            <input type="text" id="th_pdf_name" placeholder="Tên tệp PDF trong kho lưu trữ...">
+          </div>
+        </div>
+
+        <!-- KHỐI TỰ ĐỘNG ĐỒNG BỘ SANG PHÒNG QLDN1 -->
+        <div class="box-qldn1-sync">
+          <div class="box-qldn1-header">
+            <div class="box-qldn1-title">
+              <span>🏢 XÁC ĐỊNH ĐƠN VỊ LIÊN QUAN THUỘC PHÒNG QUẢN LÝ DOANH NGHIỆP 1</span>
+            </div>
+            <span class="badge-sync-ready" id="qldn1SyncStatusBadge">Tự động đồng bộ sang Danh sách theo dõi kết quả</span>
+          </div>
+
+          <label style="font-size:13px; font-weight:800; color:#065f46; display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+            <input type="checkbox" id="th_co_lq" checked onchange="toggleQldn1Sync(this.checked)">
+            Đơn vị liên quan trực tiếp thuộc Phòng Quản lý Doanh nghiệp 1 (Tự động cập nhật toàn bộ thông tin đã nhập sang Danh sách theo dõi)
+          </label>
+
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label for="th_mst_lq" style="color:#047857;">Mã số thuế Doanh nghiệp mua hàng cần giải trình:</label>
+              <input type="text" id="th_mst_lq" placeholder="Gõ mã số thuế doanh nghiệp cần giải trình..." oninput="lookupMstLq(this.value)">
+              <small id="mstLqHint" style="color:#047857; font-size:11.5px; font-weight:800; margin-top:3px;"></small>
+            </div>
+            <div class="form-group">
+              <label for="th_ten_lq">Tên Doanh nghiệp mua hàng cần giải trình:</label>
+              <input type="text" id="th_ten_lq" placeholder="Tự động điền theo mã số thuế hoặc nhập tay...">
+            </div>
+            <div class="form-group">
+              <label for="th_can_bo_lq">Cán bộ thuế phụ trách xử lý:</label>
+              <input type="text" id="th_can_bo_lq" placeholder="Tự động phân công cán bộ thụ lý...">
+            </div>
+          </div>
+
+          <div style="font-size:12px; color:#065f46; margin-top:10px; background:rgba(255,255,255,0.7); padding:8px 12px; border-radius:6px; border:1px dashed #34d399; line-height:1.5;">
+            <b>💡 Cơ chế đồng bộ tự động:</b> Khi lưu tiếp nhận tại Bước 1, hệ thống sẽ <b>tự động đẩy toàn bộ các thông tin</b> (Số đến, Số ký hiệu, Ngày văn bản, Nơi gửi, Hạn xử lý, Liên quan Công an, Mã số thuế rủi ro, Tên doanh nghiệp rủi ro, Tệp PDF) sang <b>Bước 2 (Danh sách theo dõi)</b> để Cán bộ thuế tiếp tục theo dõi tiến độ giải trình và cập nhật số liệu hóa đơn!
+          </div>
+        </div>
+
+        <div style="margin-top:14px; display:flex; justify-content:flex-end;">
+          <button class="btn btn-primary" style="padding:10px 20px; font-size:13.5px;" onclick="submitNewWarning()">💾 Lưu Tiếp Nhận & Tự Động Đồng Bộ Sang Danh Sách Theo Dõi</button>
+        </div>
+      </div>
+
+      <!-- 1.3: BẢNG TỔNG HỢP VĂN BẢN CẢNH BÁO -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>Danh sách Tổng hợp Văn bản Cảnh báo Rủi ro đã tiếp nhận</span>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" id="filterThInput" placeholder="Gõ tìm nhanh Mã số thuế, Số công văn..." oninput="renderThTable()" style="padding:6px 12px; border:1.5px solid #cbd5e1; border-radius:6px; width:300px;">
+            <span id="thCountBadge" class="badge badge-done" style="font-size:12px;">Đang tải...</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:65px;">STT</th>
+                <th style="width:160px;">Mã số thuế bên bán rủi ro</th>
+                <th style="width:240px;">Nội dung sự việc</th>
+                <th>Trích yếu tên Công văn cảnh báo</th>
+                <th style="width:170px;">Mã số thuế đơn vị mua hàng</th>
+                <th style="width:190px;">Tệp PDF Cảnh báo</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyThRuiRo"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== BƯỚC 2: THEO DÕI & CẬP NHẬT KẾT QUẢ ==================== -->
+    <section id="mod_dsrr" class="module-pane">
+      <div class="kpi-filter-bar" id="kpiFilterBar"></div>
+      <div class="invoice-group-strip" id="invoiceGroupStrip"></div>
+
+      <div class="panel panel-blue">
+        <div class="panel-header">
+          <span>Danh sách Doanh nghiệp Rủi ro cần theo dõi & xử lý</span>
+          <span style="font-size:12px; color:#64748b; font-weight:normal;">(Tự động đồng bộ từ phân hệ Tiếp nhận, sẵn sàng cập nhật kết quả giải trình)</span>
+        </div>
+
+        <!-- THANH CÔNG CỤ TÌM KIẾM CHI TIẾT & BỘ LỌC ĐA NĂNG -->
+        <div class="search-filter-toolbar">
+          <div class="search-input-box" style="flex:1;">
+            <input type="text" id="filterDsrrInput" placeholder="🔍 Tìm kiếm chi tiết (Mã số thuế, Tên doanh nghiệp, Cán bộ thuế, Nội dung giải trình, Số thông báo, Kết quả xử lý, File PDF, Số tiền...)" oninput="debouncedRenderDsrrTable()">
+            <button class="search-clear-btn" id="btnClearDsrrSearch" onclick="clearDsrrSearch()" title="Xóa tìm kiếm">✕</button>
+          </div>
+          <select id="filterOfficerSelect" onchange="renderDsrrTable()" style="padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:7px; font-size:12.5px; font-weight:700;">
+            <option value="">-- Tất cả Cán bộ xử lý --</option>
+          </select>
+          <select id="filterInvoiceGroupSelect" onchange="renderDsrrTable()" style="padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:7px; font-size:12.5px; font-weight:700;">
+            <option value="">-- Tất cả 4 Nhóm Hóa đơn --</option>
+            <option value="GROUP_1">Nhóm 1: Cam kết có mua bán hàng hóa, dịch vụ</option>
+            <option value="GROUP_2">Nhóm 2: Tự điều chỉnh giảm chi phí, giảm khấu trừ thuế</option>
+            <option value="GROUP_3">Nhóm 3: Có nhận hóa đơn nhưng không kê khai thuế</option>
+            <option value="GROUP_4">Nhóm 4: Không nhận được hóa đơn, không kê khai thuế</option>
+          </select>
+          <select id="filterNoticeSelect" onchange="renderDsrrTable()" style="padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:7px; font-size:12.5px; font-weight:700;">
+            <option value="">-- Tất cả Thông báo --</option>
+            <option value="HAS_TB">📋 Đã có Thông báo giải trình</option>
+            <option value="NO_TB">⏳ Chưa ban hành Thông báo</option>
+            <option value="OVERDUE">⏰ Quá hạn Thông báo giải trình</option>
+          </select>
+          <select id="filterPdfSelect" onchange="renderDsrrTable()" style="padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:7px; font-size:12.5px; font-weight:700;">
+            <option value="">-- Tất cả File PDF --</option>
+            <option value="HAS_RES_PDF">📄 Có File PDF Kết quả</option>
+            <option value="HAS_ATT_PDF">📎 Có File PDF Cảnh báo</option>
+            <option value="NO_PDF">Chưa có File PDF</option>
+          </select>
+          <button class="btn btn-outline" onclick="resetDsrrFilters()" style="padding:7px 11px; font-size:12px; white-space:nowrap;" title="Xóa bỏ mọi bộ lọc và quay về mặc định">✕ Đặt lại lọc</button>
+          <span id="dsrrSearchCount" class="badge badge-done" style="font-size:12px; padding:6px 12px;">Đang hiển thị...</span>
+          <button class="btn btn-warning" id="btnOpenReminderModal" onclick="openOutlookReminderModal()" style="display:inline-flex; align-items:center; gap:6px; font-weight:800; white-space:nowrap; padding:7px 13px;" title="Rà soát các hồ sơ rủi ro quá hạn và gửi email nhắc việc qua Outlook cho cán bộ">
+            📧 Nhắc việc Outlook (<span id="overdueCountPill" style="background:#78350f; color:#fff; border-radius:10px; padding:1px 6px; font-size:11px;">0</span>)
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable" onclick="sortDsrrTable('id')" style="width:130px;" title="Bấm để sắp xếp theo STT / Số văn bản">1. Công văn đến <span id="sort_icon_dsrr_id" class="sort-indicator">↕</span></th>
+                <th class="sortable" onclick="sortDsrrTable('mst')" style="width:125px;" title="Bấm để sắp xếp theo Mã số thuế">2. Mã số thuế <span id="sort_icon_dsrr_mst" class="sort-indicator">↕</span></th>
+                <th class="sortable" onclick="sortDsrrTable('ten_cong_ty')" style="width:220px;" title="Bấm để sắp xếp theo Tên doanh nghiệp">3. Tên Người nộp thuế <span id="sort_icon_dsrr_ten_cong_ty" class="sort-indicator">↕</span></th>
+                <th class="sortable" onclick="sortDsrrTable('tinh_trang')" style="width:145px;" title="Bấm để sắp xếp theo Trạng thái / Cán bộ">4. Trạng thái & Cán bộ <span id="sort_icon_dsrr_tinh_trang" class="sort-indicator">↕</span></th>
+                <th class="sortable" onclick="sortDsrrTable('mst_rr')" style="width:165px;" title="Bấm để sắp xếp theo Doanh nghiệp rủi ro">5. DN bán rủi ro <span id="sort_icon_dsrr_mst_rr" class="sort-indicator">↕</span></th>
+                <th class="sortable" onclick="sortDsrrTable('han_gt')" title="Bấm để sắp xếp theo Hạn giải trình / Tiến độ">6. Tiến độ & Hạn giải trình <span id="sort_icon_dsrr_han_gt" class="sort-indicator">↕</span></th>
+                <th class="sortable" onclick="sortDsrrTable('so_tien')" style="width:175px;" title="Bấm để sắp xếp theo Số liệu tiền thuế">7. Thuế tự điều chỉnh <span id="sort_icon_dsrr_so_tien" class="sort-indicator">↕</span></th>
+                <th style="width:170px; text-align:center;">8. Tài liệu & Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyDsrr"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== BƯỚC 3: TRA CỨU TOÀN DIỆN DANH SÁCH CÔNG VĂN & HỒ SƠ RỦI RO ==================== -->
+    <section id="mod_inspect" class="module-pane">
+      <div class="panel panel-purple">
+        <div class="panel-header" style="flex-wrap:wrap; gap:10px;">
+          <div>
+            <span style="font-size:15px; font-weight:800;">🔍 Tra cứu Toàn diện Danh sách Công văn & Hồ sơ Hóa đơn Rủi ro</span>
+            <div style="font-size:12px; color:#64748b; font-weight:normal; margin-top:2px;">Tra cứu chi tiết mọi thông tin: Tên NNT, Mã số thuế, DN bán rủi ro, Số công văn, Hạn giải trình, Số tiền thuế, Tệp PDF</div>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button class="btn btn-purple" id="tabBtnInspectDsrr" onclick="switchInspectTab('dsrr')" style="padding:6px 12px; font-size:12px; font-weight:800;">📋 Hồ sơ theo dõi (DSRR 2026)</button>
+            <button class="btn btn-outline" id="tabBtnInspectTh" onclick="switchInspectTab('th')" style="padding:6px 12px; font-size:12px; font-weight:800;">📑 Công văn cảnh báo (TH_Rủi ro)</button>
+          </div>
+        </div>
+
+        <!-- THANH CÔNG CỤ TÌM KIẾM CHI TIẾT & BỘ LỌC ĐA NĂNG CHO TRA CỨU -->
+        <div class="search-filter-toolbar" style="margin-bottom:14px;">
+          <div class="search-input-box" style="flex:1;">
+            <input type="text" id="inspectMstInput" placeholder="🔍 Nhập Mã số thuế, Tên doanh nghiệp NNT, DN bán rủi ro, Số công văn, Cán bộ, Nội dung giải trình, Số tiền..." oninput="debouncedInspectorSearch()">
+            <button class="search-clear-btn" id="btnClearInspectSearch" onclick="clearInspectSearch()" title="Xóa tìm kiếm">✕</button>
+          </div>
+          <select id="inspectFilterStatusSelect" onchange="executeInspectorSearch()" style="padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:7px; font-size:12.5px; font-weight:700;">
+            <option value="">-- Tất cả Trạng thái --</option>
+            <option value="Chưa xử lý">🔴 Chưa xử lý</option>
+            <option value="Đang xử lý">🟡 Đang xử lý</option>
+            <option value="OVERDUE">⏰ Quá hạn Thông báo giải trình</option>
+            <option value="Đã xử lý">🟢 Đã hoàn thành</option>
+          </select>
+          <select id="inspectFilterOfficerSelect" onchange="executeInspectorSearch()" style="padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:7px; font-size:12.5px; font-weight:700;">
+            <option value="">-- Tất cả Cán bộ xử lý --</option>
+          </select>
+          <select id="inspectFilterInvoiceGroupSelect" onchange="executeInspectorSearch()" style="padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:7px; font-size:12.5px; font-weight:700;">
+            <option value="">-- Tất cả 4 Nhóm Hóa đơn --</option>
+            <option value="GROUP_1">Nhóm 1: Cam kết có mua bán</option>
+            <option value="GROUP_2">Nhóm 2: Tự điều chỉnh giảm</option>
+            <option value="GROUP_3">Nhóm 3: Có nhận nhưng không kê khai</option>
+            <option value="GROUP_4">Nhóm 4: Không nhận được hóa đơn</option>
+          </select>
+          <select id="inspectFilterPdfSelect" onchange="executeInspectorSearch()" style="padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:7px; font-size:12.5px; font-weight:700;">
+            <option value="">-- Tất cả File PDF --</option>
+            <option value="HAS_RES_PDF">📄 Có File PDF Kết quả</option>
+            <option value="HAS_ATT_PDF">📎 Có File PDF Cảnh báo</option>
+            <option value="NO_PDF">Chưa có File PDF</option>
+          </select>
+          <button class="btn btn-outline" onclick="resetInspectFilters()" style="padding:7px 11px; font-size:12px; white-space:nowrap;" title="Xóa bỏ mọi bộ lọc">✕ Đặt lại lọc</button>
+          <span id="inspectCountBadge" class="badge badge-done" style="font-size:12px; padding:6px 12px;">Đang tải...</span>
+        </div>
+
+        <!-- BẢNG TRA CỨU HỒ SƠ DSRR (TAB 1) -->
+        <div class="table-wrap" id="wrapInspectDsrr">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable" onclick="sortInspectTable('id')" style="width:55px;" title="Bấm để sắp xếp theo STT">STT <span id="sort_icon_inspect_id" class="sort-indicator">↕</span></th>
+                <th class="sortable" onclick="sortInspectTable('mst')" style="width:125px;" title="Bấm để sắp xếp theo Mã số thuế">Mã số thuế <span id="sort_icon_inspect_mst" class="sort-indicator">↕</span></th>
+                <th class="sortable" onclick="sortInspectTable('ten_cong_ty')" style="width:210px;" title="Bấm để sắp xếp theo Tên người nộp thuế">Tên Người nộp thuế <span id="sort_icon_inspect_ten_cong_ty" class="sort-indicator">↕</span></th>
+                <th class="sortable" onclick="sortInspectTable('mst_rr')" style="width:170px;" title="Bấm để sắp xếp theo DN bán rủi ro">DN bán có dấu hiệu rủi ro <span id="sort_icon_inspect_mst_rr" class="sort-indicator">↕</span></th>
+                <th class="sortable" onclick="sortInspectTable('ngay_vb_den')" style="width:170px;" title="Bấm để sắp xếp theo Công văn đến">Công văn cảnh báo rủi ro <span id="sort_icon_inspect_ngay_vb_den" class="sort-indicator">↕</span></th>
+                <th class="sortable" onclick="sortInspectTable('tinh_trang')" style="width:160px;" title="Bấm để sắp xếp theo Trạng thái / Cán bộ">Trạng thái & Cán bộ <span id="sort_icon_inspect_tinh_trang" class="sort-indicator">↕</span></th>
+                <th class="sortable" onclick="sortInspectTable('han_gt')" title="Bấm để sắp xếp theo Hạn giải trình / Tiến độ">Quá trình, Hạn giải trình & Số liệu <span id="sort_icon_inspect_han_gt" class="sort-indicator">↕</span></th>
+                <th style="width:180px;">Tài liệu kết quả (File PDF)</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyInspectResult"></tbody>
+          </table>
+        </div>
+
+        <!-- BẢNG TRA CỨU VĂN BẢN CẢNH BÁO GỐC TH_RỦI RO (TAB 2) -->
+        <div class="table-wrap" id="wrapInspectTh" style="display:none;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:60px;">STT</th>
+                <th style="width:160px;">MST Bên bán rủi ro</th>
+                <th style="width:230px;">Nội dung sự việc</th>
+                <th>Trích yếu tên Công văn cảnh báo</th>
+                <th style="width:170px;">MST Doanh nghiệp quản lý</th>
+                <th style="width:180px;">Tệp PDF Cảnh báo</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyInspectTh"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== BƯỚC 4: KHO FILE & SAO LƯU \\qng-pthieu10\SharePdf ==================== -->
+    <section id="mod_sharepdf" class="module-pane">
+      <div class="panel panel-amber">
+        <div class="panel-header">
+          <span>Kho File PDF Kết quả & Cơ sở dữ liệu `.db` tại `\\qng-pthieu10\SharePdf` (Hỗ trợ Giả lập trên Laptop cá nhân)</span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-outline" style="border-color:#10b981; color:#047857; font-weight:700;" onclick="downloadAllSharePdfZip()" title="Gom toàn bộ file PDF trong kho lưu trữ SharePdf tải về 1 lần dạng .ZIP">📦 Tải Trọn Bộ Kho PDF (ZIP)</button>
+            <button class="btn btn-success" onclick="triggerManualBackup()">💾 Sao lưu CSDL Ngay</button>
+            <button class="btn btn-outline" onclick="promptChangeSharePath()">📁 Đổi / Kiểm tra Đường dẫn</button>
+            <button class="btn btn-primary" onclick="refreshData()">🔄 Quét lại Kho PDF</button>
+          </div>
+        </div>
+        <div id="simulationBanner" style="background:#fffbeb; border:1.5px solid #fcd34d; padding:10px 14px; border-radius:8px; margin-bottom:12px; font-size:12.5px; color:#92400e;"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:60px;">STT</th>
+                <th>Tên File PDF trong Kho</th>
+                <th>Đường dẫn UNC Chuẩn (`\\qng-pthieu10\SharePdf`)</th>
+                <th style="width:110px;">Dung lượng</th>
+                <th style="width:140px;">Ngày cập nhật</th>
+                <th style="width:130px;">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="tbodySharePdfFiles"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== BƯỚC 5: CẤU HÌNH QUẢN TRỊ ADMIN (DANH MỤC NNT/CBQL & TÍCH HỢP SAP) ==================== -->
+    <section id="mod_admin" class="module-pane">
+      <div class="panel panel-rose" style="border-color:#f43f5e;">
+        <div class="panel-header" style="background:#fff1f2; border-bottom:1.5px solid #fecdd3; padding:12px 18px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="color:#9f1239; font-size:16px; font-weight:800;">⚙️ Phân Hệ Cấu Hình Quản Trị Hệ Thống (Dành Cho Quản Trị Viên)</span>
+            <span class="badge" style="background:#f43f5e; color:#fff; font-weight:800;">🔒 Admin Authenticated</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-outline" style="border-color:#cbd5e1; color:#334155; font-weight:700;" onclick="openChangePasswordModal()">🔑 Đổi Mật Khẩu</button>
+            <button class="btn btn-outline" style="border-color:#f43f5e; color:#be123c; font-weight:700;" onclick="exitAdminMode()">🚪 Đăng xuất Admin</button>
+          </div>
+        </div>
+
+        <!-- THANH CHUYỂN SUB-TAB QUẢN TRỊ -->
+        <div class="admin-subtabs-bar" style="display:flex; gap:8px; padding:12px 18px 0; background:#fff; border-bottom:1.5px solid #e2e8f0;">
+          <button class="admin-subtab-btn active" id="btnSubtabNnt" onclick="switchAdminSubtab('admin_nnt', this)">
+            📋 1. Danh Mục NNT & Phân Công CBQL
+          </button>
+          <button class="admin-subtab-btn" id="btnSubtabSap" onclick="switchAdminSubtab('admin_sap', this)">
+            ⚡ 2. Cấu Hình Tự Động Hóa & Đồng Bộ SAP
+          </button>
+          <button class="admin-subtab-btn" id="btnSubtabAudit" onclick="switchAdminSubtab('admin_audit', this)">
+            🛡️ 3. Nhật Ký Lưu Vết & Giám Sát CSDL
+          </button>
+        </div>
+
+        <!-- ==================== SUB-TAB 1: QUẢN LÝ DANH MỤC NNT & EMAIL CBQL ==================== -->
+        <div id="admin_subtab_nnt" class="admin-subtab-content" style="padding:16px 18px;">
+          <!-- 4 THẺ THỐNG KÊ KPI -->
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin-bottom:16px;">
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #3b82f6; border-radius:8px; padding:10px 14px;">
+              <div style="font-size:11.5px; color:#64748b; font-weight:700;">TỔNG DOANH NGHIỆP TRONG DANH MỤC</div>
+              <div style="font-size:22px; font-weight:900; color:#1d4ed8;" id="adminKpiTotalNnt">0</div>
+              <div style="font-size:11px; color:#64748b;">Doanh nghiệp quản lý</div>
+            </div>
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #10b981; border-radius:8px; padding:10px 14px;">
+              <div style="font-size:11.5px; color:#64748b; font-weight:700;">ĐÃ CÓ HỘP THƯ @GDT.GOV.VN</div>
+              <div style="font-size:22px; font-weight:900; color:#059669;" id="adminKpiWithEmail">0</div>
+              <div style="font-size:11px; color:#059669;">Sẵn sàng nhắc việc Outlook</div>
+            </div>
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #f59e0b; border-radius:8px; padding:10px 14px;">
+              <div style="font-size:11.5px; color:#64748b; font-weight:700;">CHƯA CÓ HỘP THƯ ĐIỆN TỬ</div>
+              <div style="font-size:22px; font-weight:900; color:#d97706;" id="adminKpiWithoutEmail">0</div>
+              <div style="font-size:11px; color:#d97706;">Cần bổ sung địa chỉ hộp thư</div>
+            </div>
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #8b5cf6; border-radius:8px; padding:10px 14px;">
+              <div style="font-size:11.5px; color:#64748b; font-weight:700;">SỐ CÁN BỘ PHỤ TRÁCH</div>
+              <div style="font-size:22px; font-weight:900; color:#7c3aed;" id="adminKpiOfficers">0</div>
+              <div style="font-size:11px; color:#64748b;">Công chức thụ lý</div>
+            </div>
+          </div>
+
+          <!-- THANH CÔNG CỤ TÌM KIẾM & THAO TÁC EXCEL -->
+          <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:12px; background:#f1f5f9; padding:10px 14px; border-radius:8px;">
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; flex:1;">
+              <div class="search-input-box" style="width:280px;">
+                <input type="text" id="adminNntSearchInput" placeholder="🔍 Tìm kiếm Mã số thuế, Tên doanh nghiệp, Cán bộ, Hộp thư..." oninput="debouncedSearchAdminNnt()">
+                <button class="search-clear-btn" id="btnClearAdminNntSearch" onclick="clearAdminNntSearch()" style="display:none;">✕</button>
+              </div>
+              <select id="adminNntOfficerFilter" onchange="loadAdminNntList(1)" style="padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:6px; font-size:12.5px; font-weight:700; background:#fff;">
+                <option value="">-- Tất cả cán bộ thuế quản lý --</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="openAddNntModal()" style="font-weight:700; display:inline-flex; align-items:center; gap:5px;">
+                ➕ Thêm Doanh Nghiệp Mới
+              </button>
+              <button class="btn btn-success" onclick="openImportNntModal()" style="font-weight:700; display:inline-flex; align-items:center; gap:5px;">
+                📥 Nạp Từ File Excel
+              </button>
+              <button class="btn btn-outline" onclick="exportAdminNntExcel()" style="font-weight:700; display:inline-flex; align-items:center; gap:5px;">
+                📤 Xuất Excel
+              </button>
+              <button class="btn btn-outline" onclick="downloadNntTemplate()" style="font-weight:700; display:inline-flex; align-items:center; gap:5px;">
+                📄 Tải File Mẫu
+              </button>
+            </div>
+          </div>
+
+          <!-- BẢNG DANH SÁCH NNT & CÁN BỘ QUẢN LÝ -->
+          <div class="table-wrap" style="max-height:480px;">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:50px;">STT</th>
+                  <th style="width:160px;">Mã số thuế (*)</th>
+                  <th style="width:280px;">Tên Người nộp thuế / Doanh nghiệp</th>
+                  <th style="width:200px;">Cán bộ thuế quản lý</th>
+                  <th style="width:220px;">Hộp thư điện tử cán bộ (@gdt.gov.vn)</th>
+                  <th>Địa chỉ trụ sở doanh nghiệp</th>
+                  <th style="width:120px; text-align:center;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyAdminNnt">
+                <!-- Render từ app.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- THANH PHÂN TRANG -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding:6px 4px;">
+            <div style="font-size:12px; color:#64748b;" id="adminNntPaginationInfo">Đang tải dữ liệu...</div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button class="btn btn-outline" id="btnAdminPrevPage" onclick="changeAdminNntPage(-1)" style="padding:4px 10px; font-size:12px;">◀ Trang trước</button>
+              <span id="adminNntPageIndicator" style="font-size:12.5px; font-weight:800; color:#0f172a; padding:0 8px;">Trang 1</span>
+              <button class="btn btn-outline" id="btnAdminNextPage" onclick="changeAdminNntPage(1)" style="padding:4px 10px; font-size:12px;">Trang sau ▶</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== SUB-TAB 2: SLOT TỰ ĐỘNG HÓA ỨNG DỤNG SAP ==================== -->
+        <div id="admin_subtab_sap" class="admin-subtab-content" style="padding:16px 18px; display:none;">
+          <!-- BANNER KIẾN TRÚC & HƯỚNG DẪN KẾT NỐI SAP -->
+          <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+              <span style="font-size:16px;">💡</span>
+              <b style="color:#166534; font-size:13.5px;">CƠ CHẾ KẾT NỐI TỰ ĐỘNG ỨNG DỤNG QUẢN LÝ THUẾ SAP / TMS (SAP GUI SCRIPTING HOOK):</b>
+            </div>
+            <div style="font-size:12px; color:#14532d; line-height:1.6;">
+              Hệ thống cung cấp một <b>Slot chờ thực thi kịch bản (Script Execution Slot)</b> chuyên biệt. Admin có thể gắn script tự động hóa (Python win32com hoặc VBScript do SAP GUI Script Recorder tạo ra) để đăng nhập vào SAP, gọi Transaction tra cứu (ví dụ <code>Z_QLNNT_CBQL</code> hoặc <code>SE16N</code>), trích xuất danh sách NNT & Email Cán bộ quản lý và tự động nạp thẳng vào CSDL <code>dm_nnt_cbql</code> nội bộ.
+            </div>
+          </div>
+
+          <!-- FORM CẤU HÌNH THÔNG SỐ SAP -->
+          <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:8px; padding:14px 16px; margin-bottom:16px;">
+            <div style="font-size:13px; font-weight:800; color:#0f172a; margin-bottom:10px;">1. THÔNG SỐ KẾT NỐI PHÂN HỆ SAP / TMS:</div>
+            <div class="form-grid-4" style="margin-bottom:10px;">
+              <div class="form-group">
+                <label for="sapSystemId">Hệ thống SAP (System ID / Server):</label>
+                <input type="text" id="sapSystemId" placeholder="VD: PRD_TMS hoặc TMS_QNG">
+              </div>
+              <div class="form-group">
+                <label for="sapClient">Phân hệ Client:</label>
+                <input type="text" id="sapClient" placeholder="VD: 100 hoặc 300">
+              </div>
+              <div class="form-group">
+                <label for="sapTcode">Mã Giao Dịch (Transaction Code):</label>
+                <input type="text" id="sapTcode" placeholder="VD: Z_QLNNT_CBQL hoặc SE16N">
+              </div>
+              <div class="form-group">
+                <label for="sapScriptType">Chế độ Thực thi Kịch bản:</label>
+                <select id="sapScriptType" onchange="onSapScriptTypeChanged()">
+                  <option value="simulation_test">🧪 Chế độ Giả lập Thử nghiệm (Không cần mở SAP)</option>
+                  <option value="inline_python">🐍 Trình chạy mã Python Script tích hợp (win32com)</option>
+                  <option value="inline_vbs">📜 Trình chạy mã VBScript (SAP Script Recorder)</option>
+                  <option value="external_file">📁 Thực thi file script bên ngoài máy chủ</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="sapExternalFileBox" class="form-group" style="display:none; margin-bottom:10px;">
+              <label for="sapExternalPath">Đường dẫn đầy đủ tới file script trên máy tính:</label>
+              <input type="text" id="sapExternalPath" placeholder="VD: C:\Scripts\sap_extract_nnt.py hoặc D:\Tools\sap_sync.vbs">
+            </div>
+
+            <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-top:8px;">
+              <label style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; cursor:pointer;">
+                <input type="checkbox" id="sapAutoIngest" checked> Tự động nạp vào CSDL <code>dm_nnt_cbql</code> sau khi chạy script thành công
+              </label>
+              <div style="display:inline-flex; align-items:center; gap:8px;">
+                <label for="sapIngestMode" style="font-size:12px; font-weight:700; color:#475569;">Chế độ nạp CSDL:</label>
+                <select id="sapIngestMode" style="padding:4px 8px; font-weight:700; border-radius:6px; font-size:12px;">
+                  <option value="upsert">Cập nhật & Thêm mới (Upsert - Giữ dữ liệu cũ, an toàn)</option>
+                  <option value="replace">Ghi đè toàn bộ (Replace all - Xóa sạch rồi nạp mới)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- TRÌNH SOẠN THẢO MÃ SCRIPT SAP (SLOT CHỜ GẮN CODE) -->
+          <div id="sapCodeEditorBox" style="background:#0f172a; border-radius:8px; padding:12px 16px; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #334155; padding-bottom:8px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:14px;">💻</span>
+                <b style="color:#38bdf8; font-size:12.5px;">SLOT CHỜ GẮN MÃ KỊCH BẢN TỰ ĐỘNG HÓA SAP (PYTHON / VBSCRIPT):</b>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; background:#1e293b; color:#cbd5e1; border-color:#475569;" onclick="loadSapSamplePython()">📄 Nạp Mẫu Python (win32com)</button>
+                <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; background:#1e293b; color:#cbd5e1; border-color:#475569;" onclick="loadSapSampleVbs()">📄 Nạp Mẫu VBScript</button>
+                <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; background:#1e293b; color:#cbd5e1; border-color:#475569;" onclick="clearSapScriptCode()">🗑️ Xóa mã</button>
+              </div>
+            </div>
+            <textarea id="sapCustomScriptCode" rows="11" style="width:100%; font-family:Consolas, 'Courier New', monospace; font-size:12px; background:#020617; color:#38bdf8; border:1px solid #1e293b; border-radius:6px; padding:10px; line-height:1.5; outline:none;" placeholder="// Dán mã kịch bản tự động hóa SAP GUI tại đây..."></textarea>
+          </div>
+
+          <!-- THANH KÍCH HOẠT ĐỒNG BỘ VÀ LƯU CẤU HÌNH -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; background:#fff; padding:10px 14px; border:1.5px solid #cbd5e1; border-radius:8px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <button class="btn btn-primary" onclick="runSapSyncNow()" id="btnRunSapSync" style="font-size:13.5px; padding:9px 18px; font-weight:800; background:#2563eb; display:inline-flex; align-items:center; gap:6px;">
+                🚀 Kích Hoạt Chạy Script SAP Đồng Bộ Ngay
+              </button>
+              <button class="btn btn-outline" onclick="saveSapConfig()" style="font-size:13px; padding:9px 15px; font-weight:700;">
+                💾 Lưu Cấu Hình SAP
+              </button>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:12px; color:#64748b;">Trạng thái lần chạy trước:</span>
+              <span class="badge" id="sapLastSyncBadge" style="background:#e2e8f0; color:#0f172a; font-weight:700;">Chưa chạy</span>
+            </div>
+          </div>
+
+          <!-- KHUNG NHẬT KÝ CONSOLE LOG THỜI GIAN THỰC -->
+          <div style="background:#020617; border:1px solid #1e293b; border-radius:8px; padding:12px 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border-bottom:1px solid #1e293b; padding-bottom:6px;">
+              <b style="color:#10b981; font-size:12px;">🖥️ CONSOLE LOG THỰC THI SAP SCRIPT REALTIME:</b>
+              <button class="btn btn-outline" style="padding:2px 8px; font-size:10.5px; background:#0f172a; color:#cbd5e1; border-color:#334155;" onclick="clearSapConsole()">Xóa Log</button>
+            </div>
+            <pre id="sapConsoleOutput" style="font-family:Consolas, monospace; font-size:11.5px; color:#a7f3d0; max-height:220px; overflow-y:auto; margin:0; line-height:1.6; white-space:pre-wrap;">(Sẵn sàng. Nhấn "Kích Hoạt Chạy Script SAP Đồng Bộ Ngay" để xem tiến trình thực thi trực tiếp tại đây...)</pre>
+          </div>
+        </div>
+
+        <!-- ==================== SUB-TAB 3: NHẬT KÝ LƯU VẾT & GIÁM SÁT HỆ THỐNG ==================== -->
+        <div id="admin_subtab_audit" class="admin-subtab-content" style="padding:16px 18px; display:none;">
+          <!-- 3 THẺ KPI GIÁM SÁT -->
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; margin-bottom:16px;">
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #f43f5e; border-radius:8px; padding:10px 14px;">
+              <div style="font-size:11.5px; color:#64748b; font-weight:700;">TỔNG SỐ SỰ KIỆN LƯU VẾT</div>
+              <div style="font-size:22px; font-weight:900; color:#e11d48;" id="adminKpiTotalLogs">0</div>
+              <div style="font-size:11px; color:#64748b;">Xem / sửa / xuất file / đăng nhập</div>
+            </div>
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #10b981; border-radius:8px; padding:10px 14px;">
+              <div style="font-size:11.5px; color:#64748b; font-weight:700;">HÀNG CHỜ ĐỒNG BỘ CSDL</div>
+              <div style="font-size:22px; font-weight:900; color:#059669;" id="adminKpiSyncQueueStatus">0 chờ</div>
+              <div style="font-size:11px; color:#059669;" id="adminKpiSyncQueueDetail">Đã ghi thẳng vào CSDL dùng chung</div>
+            </div>
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #8b5cf6; border-radius:8px; padding:10px 14px;">
+              <div style="font-size:11.5px; color:#64748b; font-weight:700;">PHIÊN QUẢN TRỊ HIỆN TẠI</div>
+              <div style="font-size:16px; font-weight:900; color:#7c3aed; margin-top:4px;" id="adminKpiCurrentAdmin">admin (Đã xác thực)</div>
+              <div style="font-size:11px; color:#64748b;">Mã hóa PBKDF2 bảo mật cao</div>
+            </div>
+          </div>
+
+          <!-- THANH CÔNG CỤ TÌM KIẾM & THAO TÁC NHẬT KÝ -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px; background:#fff; padding:10px 14px; border:1px solid #e2e8f0; border-radius:8px;">
+            <div style="display:flex; gap:10px; align-items:center; flex:1; max-width:620px;">
+              <input type="text" id="adminAuditSearchInput" placeholder="🔍 Tìm kiếm Account, IP máy, Cán bộ, MST, Chi tiết thao tác..." oninput="debouncedFilterAdminAudit()" style="width:100%; padding:8px 12px; border:1.5px solid #cbd5e1; border-radius:6px; font-size:12.5px;">
+              <select id="adminAuditEventFilter" onchange="filterAdminAuditList()" style="padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:6px; font-size:12.5px; font-weight:700; background:#fff; min-width:180px;">
+                <option value="">-- Tất cả hành động --</option>
+                <option value="ADMIN_LOGIN">Đăng nhập Quản trị</option>
+                <option value="CREATE_TH_RR">Tiếp nhận VB rủi ro</option>
+                <option value="UPDATE_DSRR">Cập nhật hồ sơ rủi ro</option>
+                <option value="EXPORT">Xuất file Excel / ZIP</option>
+                <option value="ATTACHMENT">Xem / Tải file PDF</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-outline" onclick="loadStealthLogs()" style="font-weight:700;">🔄 Làm mới</button>
+              <button class="btn btn-outline" style="border-color:#10b981; color:#059669; font-weight:700;" onclick="triggerManualSync()">⚡ Đồng bộ ngay</button>
+              <button class="btn btn-outline" onclick="exportAuditLogsCsv()" style="font-weight:700;">📥 Xuất File CSV</button>
+            </div>
+          </div>
+
+          <!-- BẢNG NHẬT KÝ LƯU VẾT ĐỊNH DANH NGẦM -->
+          <div class="table-wrap" style="max-height:560px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:50px;">ID</th>
+                  <th style="width:140px;">Thời điểm</th>
+                  <th style="width:110px;">IP Máy trạm</th>
+                  <th style="width:180px;">Account / Công chức</th>
+                  <th style="width:140px;">Phòng ban</th>
+                  <th style="width:160px;">Hành động</th>
+                  <th style="width:150px;">Phân hệ</th>
+                  <th style="width:120px;">Mã số thuế</th>
+                  <th>Chi tiết thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyStealthLogs">
+                <tr><td colspan="9" style="text-align:center; padding:20px; color:#64748b;">Đang tải dữ liệu nhật ký...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+
+  </div>
+</main>
+
+<!-- MODAL CẬP NHẬT KẾT QUẢ XỬ LÝ (CHIA 3 BƯỚC RÕ RÀNG, DỄ NHÌN DỄ THAO TÁC) -->
+<div class="modal-backdrop" id="dsrrModal">
+  <div class="modal-box">
+    <div class="panel-header" style="padding:14px 22px; margin:0; background:#0f172a; color:#fff;">
+      <span id="modalTitle">Cập nhật Kết quả Xử lý & Giải trình Doanh nghiệp</span>
+      <button class="btn btn-outline" style="background:#1e293b; color:#fff; border-color:#475569;" onclick="closeDsrrModal()">Đóng [ESC]</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="md_id">
+
+      <!-- BƯỚC 1: THÔNG TIN DOANH NGHIỆP & TRẠNG THÁI XỬ LÝ (KẾ THỪA TỪ TIẾP NHẬN BƯỚC 1) -->
+      <div class="step-card" style="background:#eff6ff; border-color:#93c5fd;">
+        <div class="step-title" style="color:#1e40af;">
+          <span class="step-num" style="background:#2563eb;">1</span>
+          <span>Thông tin Doanh nghiệp & Trạng thái Hồ sơ (Đồng bộ tự động từ phân hệ Tiếp nhận)</span>
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label for="md_mst">Mã số thuế & Tên Doanh nghiệp thuộc cơ quan thuế quản lý</label>
+            <div style="display:flex; gap:6px;">
+              <input type="text" id="md_mst" readonly style="width:130px; background:#f1f5f9; font-weight:800; color:#1e40af;">
+              <input type="text" id="md_ten_cong_ty" style="flex:1; background:#fff; font-weight:700;">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="md_tinh_trang">Tình trạng xử lý & Cán bộ thuế phụ trách quản lý</label>
+            <div style="display:flex; gap:6px;">
+              <select id="md_tinh_trang" style="width:155px; font-weight:800; background:#fff;">
+                <option value="Chưa xử lý">🔴 Chưa xử lý</option>
+                <option value="Đang xử lý">🟡 Đang xử lý</option>
+                <option value="Đã xử lý">🟢 Đã xử lý</option>
+              </select>
+              <input type="text" id="md_can_bo" placeholder="Cán bộ xử lý" style="flex:1; background:#fff;">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="md_mst_rr">Mã số thuế & Tên Doanh nghiệp bán có dấu hiệu rủi ro</label>
+            <div style="display:flex; gap:6px;">
+              <input type="text" id="md_mst_rr" style="width:125px; background:#fff; color:#dc2626; font-weight:800;">
+              <input type="text" id="md_ten_cty_rr" placeholder="Tên doanh nghiệp rủi ro" style="flex:1; background:#fff;">
+            </div>
+          </div>
+        </div>
+
+        <!-- BỔ SUNG: KHỐI ĐÍNH KÈM & QUẢN LÝ TỆP CÔNG VĂN RỦI RO (CVRR) -->
+        <div style="margin-top:10px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:10px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <span style="font-weight:700; color:#1e40af; font-size:12.5px;">📎 Tệp Công văn Cảnh báo Rủi ro Ban đầu (CVRR):</span>
+              <span style="font-size:11px; color:#64748b; margin-left:6px;">(Chuẩn hóa tên tệp: <code>CVRR_ddmmyyyy_MST...pdf</code>)</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="file" id="md_upload_cvrr_pdf" accept=".pdf" style="display:none;" onchange="handleUploadCvrrPdf(this)">
+              <button type="button" class="btn btn-outline" style="border-color:#3b82f6; color:#1d4ed8; font-weight:700; font-size:12px; padding:4px 10px;" onclick="document.getElementById('md_upload_cvrr_pdf').click()">
+                📁 Chọn Tệp CVRR Đính Kèm
+              </button>
+              <input type="hidden" id="md_attachment_name">
+            </div>
+          </div>
+          <div id="md_cvrr_attached_box" style="margin-top:6px; font-size:12px; display:none; align-items:center; gap:8px;">
+            <span style="color:#475569;">Đã đính kèm:</span>
+            <a id="md_cvrr_attached_link" href="#" target="_blank" class="badge-pdf" style="background:#eff6ff; color:#1e40af; border-color:#bfdbfe; font-weight:700; text-decoration:none;"></a>
+            <button type="button" class="btn btn-outline" style="padding:1px 6px; font-size:11px; color:#dc2626; border-color:#fca5a5;" onclick="clearAttachedCvrrPdf()">✕ Gỡ bỏ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BƯỚC 2: KẾT QUẢ XỬ LÝ, NỘI DUNG GIẢI TRÌNH & FILE PDF KẾT QUẢ -->
+      <div class="step-card" style="background:#f5f3ff; border-color:#c4b5fd;">
+        <div class="step-title" style="color:#5b21b6;">
+          <span class="step-num" style="background:#7c3aed;">2</span>
+          <span>Quá trình Xử lý, Giải trình của Doanh nghiệp & Tài liệu kết quả đính kèm</span>
+        </div>
+
+        <!-- KHỐI DROPDOWN NHỮNG VIỆC ĐÃ THỰC HIỆN & SUB-BOX THÔNG BÁO GIẢI TRÌNH -->
+        <div style="background:#fff; border:1.5px solid #ddd6fe; border-radius:8px; padding:12px 14px; margin-bottom:12px;">
+          <div class="form-grid-2" style="margin-bottom:8px;">
+            <div class="form-group">
+              <label for="md_action_type" style="color:#5b21b6; font-weight:800;">Những việc cơ quan thuế đã thực hiện (*):</label>
+              <select id="md_action_type" onchange="onActionTypeChanged()" style="font-weight:700; background:#f8fafc; border:1.5px solid #cbd5e1; padding:8px 10px; border-radius:6px;">
+                <option value="Thông báo giải trình">Thông báo giải trình</option>
+                <option value="Mời làm việc">Mời làm việc</option>
+                <option value="Chuyển thông tin phòng Kiểm tra">Chuyển thông tin phòng Kiểm tra</option>
+                <option value="Khác">Khác (nhập chi tiết lý do)</option>
+              </select>
+            </div>
+            <div class="form-group" id="boxActionOther" style="display:none;">
+              <label for="md_action_other" style="color:#b45309; font-weight:800;">Chi tiết lý do / Nội dung thực hiện khác:</label>
+              <input type="text" id="md_action_other" placeholder="Gõ chi tiết công việc đã thực hiện..." style="background:#fff;">
+            </div>
+          </div>
+
+          <!-- 1. SUB-BOX: SỐ THÔNG BÁO & NGÀY BAN HÀNH & ĐÍNH KÈM THÔNG BÁO GIẢI TRÌNH (TBGT) -->
+          <div id="boxTbDetails" style="background:#f5f3ff; border:1px solid #c4b5fd; border-radius:6px; padding:10px 12px; margin-top:6px;">
+            <div style="font-size:12px; font-weight:800; color:#5b21b6; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+              <span>📋 Chi tiết Thông báo Giải trình & Thời hạn đôn đốc:</span>
+              <span style="font-size:11px; font-weight:normal; color:#6b21a8;">(Tự động tính thời hạn giải trình = Ngày ban hành + 10 ngày làm việc)</span>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label for="md_so_thong_bao">Số thông báo giải trình:</label>
+                <input type="text" id="md_so_thong_bao" placeholder="VD: 133/TB-QNG" style="background:#fff;">
+              </div>
+              <div class="form-group">
+                <label for="md_ngay_thong_bao">Ngày ban hành thông báo:</label>
+                <input type="text" id="md_ngay_thong_bao" placeholder="dd/mm/yyyy" oninput="onNgayThongBaoChanged()" style="background:#fff; font-weight:700;">
+              </div>
+              <div class="form-group">
+                <label for="md_han_giai_trinh" style="color:#b91c1c; font-weight:800;">Thời hạn giải trình (+10 ngày làm việc):</label>
+                <input type="text" id="md_han_giai_trinh" placeholder="Tự động tính (+10 ngày)" readonly style="background:#fef2f2; color:#b91c1c; font-weight:800;">
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:8px;">
+              <label for="md_upload_tbgt_pdf" style="color:#5b21b6; font-weight:700;">📄 Đính kèm tệp Thông báo giải trình (Tự động đổi tên: <code>TBGT_ddmmyyyy_MST...pdf</code>):</label>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <input type="file" id="md_upload_tbgt_pdf" accept=".pdf" style="background:#fff; flex:1;" onchange="handleUploadTbgtPdf(this)">
+                <input type="hidden" id="md_tbgt_pdf">
+              </div>
+              <div id="md_tbgt_attached_box" style="margin-top:4px; font-size:12px; display:none;">
+                <span>Đã đính kèm:</span>
+                <a id="md_tbgt_attached_link" href="#" target="_blank" style="font-weight:700; color:#2563eb; text-decoration:none;"></a>
+                <button type="button" class="btn btn-outline" style="padding:1px 6px; font-size:11px; margin-left:6px; color:#dc2626; border-color:#fca5a5;" onclick="clearAttachedTbgtPdf()">✕ Gỡ bỏ</button>
+              </div>
+            </div>
+            <div style="font-size:11px; color:#64748b; margin-top:4px;">
+              💡 <i>Thời hạn giải trình không tính thứ Bảy, Chủ nhật. Quá thời hạn này nếu doanh nghiệp chưa giải trình hoặc chưa cập nhật kết quả, hệ thống sẽ tự động gửi email đôn đốc qua Outlook.</i>
+            </div>
+          </div>
+
+          <!-- 2. SUB-BOX: CHI TIẾT MỜI LÀM VIỆC & BIÊN BẢN LÀM VIỆC (BBLV) -->
+          <div id="boxMlvDetails" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; border-radius:6px; padding:10px 12px; margin-top:6px;">
+            <div style="font-size:12px; font-weight:800; color:#166534; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+              <span>🤝 Chi tiết Mời Doanh nghiệp Làm việc & Đính kèm Biên bản Làm việc:</span>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="md_so_bblv">Số biên bản & Ngày làm việc:</label>
+                <div style="display:flex; gap:6px;">
+                  <input type="text" id="md_so_bblv" placeholder="Số BB (VD: 01/BBLV)" style="width:50%; background:#fff;">
+                  <input type="text" id="md_ngay_bblv" placeholder="Ngày dd/mm/yyyy" style="width:50%; background:#fff; font-weight:700;">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="md_upload_bblv_pdf" style="color:#166534; font-weight:700;">📄 Đính kèm Biên bản làm việc (Tự động đổi tên: <code>BBLV_ddmmyyyy_MST...pdf</code>):</label>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <input type="file" id="md_upload_bblv_pdf" accept=".pdf" style="background:#fff; flex:1;" onchange="handleUploadBblvPdf(this)">
+                  <input type="hidden" id="md_bblv_pdf">
+                </div>
+                <div id="md_bblv_attached_box" style="margin-top:4px; font-size:12px; display:none;">
+                  <span>Đã đính kèm:</span>
+                  <a id="md_bblv_attached_link" href="#" target="_blank" style="font-weight:700; color:#16a34a; text-decoration:none;"></a>
+                  <button type="button" class="btn btn-outline" style="padding:1px 6px; font-size:11px; margin-left:6px; color:#dc2626; border-color:#fca5a5;" onclick="clearAttachedBblvPdf()">✕ Gỡ bỏ</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. SUB-BOX: CHI TIẾT CHUYỂN THÔNG TIN & PHẢN HỒI TỪ PHÒNG KIỂM TRA (PKT) -->
+          <div id="boxPktDetails" style="display:none; background:#faf5ff; border:1.5px solid #d8b4fe; border-radius:6px; padding:10px 12px; margin-top:6px;">
+            <div style="font-size:12px; font-weight:800; color:#6b21a8; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+              <span>🏢 Phối Hợp & Phản Hồi Từ Phòng Kiểm Tra Thuế:</span>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="md_pkt_noi_dung" style="color:#581c87; font-weight:700;">Nội dung Phòng Kiểm tra phản hồi:</label>
+                <textarea id="md_pkt_noi_dung" rows="2" style="background:#fff;" placeholder="Ghi nhận nội dung, kết luận phối hợp của Phòng Kiểm tra..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="md_upload_pkt_pdf" style="color:#6b21a8; font-weight:700;">📄 Đính kèm File phản hồi Phòng KT (Tự động đổi tên: <code>PKT_ddmmyyyy_MST...pdf</code>):</label>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <input type="file" id="md_upload_pkt_pdf" accept=".pdf" style="background:#fff; flex:1;" onchange="handleUploadPktPdf(this)">
+                  <input type="hidden" id="md_pkt_pdf">
+                </div>
+                <div id="md_pkt_attached_box" style="margin-top:4px; font-size:12px; display:none;">
+                  <span>Đã đính kèm:</span>
+                  <a id="md_pkt_attached_link" href="#" target="_blank" style="font-weight:700; color:#7c3aed; text-decoration:none;"></a>
+                  <button type="button" class="btn btn-outline" style="padding:1px 6px; font-size:11px; margin-left:6px; color:#dc2626; border-color:#fca5a5;" onclick="clearAttachedPktPdf()">✕ Gỡ bỏ</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HÀNG 2: GHI CHÚ TIẾN ĐỘ & NỘI DUNG GIẢI TRÌNH -->
+        <div class="form-grid-2" style="margin-bottom:10px;">
+          <div class="form-group">
+            <label for="md_ghi_chu">Ghi chú tiến độ (Số công văn giải trình của doanh nghiệp):</label>
+            <textarea id="md_ghi_chu" rows="2" style="background:#fff;" placeholder="VD: Doanh nghiệp có Công văn giải trình số 0901/CV ngày 09/01/2026..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="md_nnt_giai_trinh">Tóm tắt nội dung Người nộp thuế giải trình chi tiết:</label>
+            <textarea id="md_nnt_giai_trinh" rows="2" style="background:#fff;" placeholder="VD: Doanh nghiệp tự kê khai điều chỉnh giảm thuế GTGT khấu trừ và loại trừ chi phí tính thuế TNDN..."></textarea>
+          </div>
+        </div>
+
+        <!-- HÀNG 3: ĐỀ XUẤT XỬ LÝ & TỆP PDF ĐÍNH KÈM -->
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="md_de_xuat" style="color:#0f172a; font-weight:800;">Đề xuất xử lý hồ sơ:</label>
+            <input type="text" id="md_de_xuat" placeholder="VD: Chấp nhận giải trình / Chuyển kiểm tra / Giám sát trọng điểm..." style="background:#fff; font-weight:700;">
+          </div>
+          <div class="form-group">
+            <label for="md_upload_result_pdf" style="color:#5b21b6; font-weight:800;">📄 Chọn tệp PDF Văn bản giải trình doanh nghiệp (Tự động đổi tên: <code>GTDN_ddmmyyyy_MST...pdf</code>):</label>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <input type="file" id="md_upload_result_pdf" accept=".pdf" style="background:#fff; flex:1;" onchange="handleUploadResultPdf(this)">
+              <input type="hidden" id="md_result_pdf">
+            </div>
+            <div id="md_pdf_attached_box" style="margin-top:4px; font-size:12px; display:none;">
+              <span>Tệp đính kèm:</span>
+              <a id="md_pdf_attached_link" href="#" target="_blank" style="font-weight:700; color:#2563eb; text-decoration:none;"></a>
+              <button type="button" class="btn btn-outline" style="padding:1px 6px; font-size:11px; margin-left:6px; color:#dc2626; border-color:#fca5a5;" onclick="clearAttachedResultPdf()">✕ Gỡ bỏ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BƯỚC 3: SỐ LIỆU HÓA ĐƠN THEO 4 NHÓM KẾT QUẢ -->
+      <div class="step-card" style="background:#ffffff; border-color:#cbd5e1; margin-bottom:0;">
+        <div class="step-title" style="color:#0f172a;">
+          <span class="step-num" style="background:#059669;">3</span>
+          <span>Số liệu Hóa đơn phân loại theo 4 Nhóm Kết quả Giải trình</span>
+        </div>
+        <div class="form-grid-4">
+          <div style="background:#eff6ff; padding:10px 12px; border-radius:8px; border:1.5px solid #93c5fd;">
+            <div style="font-size:12px; font-weight:800; color:#1e40af; margin-bottom:6px;">1. Cam kết có mua bán hàng hóa, dịch vụ & không điều chỉnh</div>
+            <div class="form-group"><label for="md_ck_so">Số lượng hóa đơn</label><input type="number" id="md_ck_so" value="0" style="background:#fff;"></div>
+            <div class="form-group"><label for="md_ck_gt">Tổng giá trị chưa thuế (VNĐ)</label><input type="number" id="md_ck_gt" value="0" style="background:#fff;"></div>
+            <div class="form-group"><label for="md_ck_vat">Tiền thuế giá trị gia tăng (VNĐ)</label><input type="number" id="md_ck_vat" value="0" style="background:#fff;"></div>
+          </div>
+          <div style="background:#ecfdf5; padding:10px 12px; border-radius:8px; border:1.5px solid #6ee7b7;">
+            <div style="font-size:12px; font-weight:800; color:#065f46; margin-bottom:6px;">2. Doanh nghiệp tự điều chỉnh giảm chi phí, giảm thuế</div>
+            <div class="form-group"><label for="md_dc_so">Số lượng hóa đơn</label><input type="number" id="md_dc_so" value="0" style="background:#fff;"></div>
+            <div class="form-group"><label for="md_dc_cp">Số tiền giảm chi phí (VNĐ)</label><input type="number" id="md_dc_cp" value="0" style="background:#fff;"></div>
+            <div class="form-group"><label for="md_dc_kt">Số tiền giảm khấu trừ thuế GTGT (VNĐ)</label><input type="number" id="md_dc_kt" value="0" style="background:#fff;"></div>
+            <div class="form-group"><label for="md_dc_tndn" style="color:#065f46; font-weight:800;">Số thuế TNDN phải nộp (VNĐ)</label><input type="number" id="md_dc_tndn" value="0" style="background:#fff; font-weight:700;"></div>
+            <div class="form-group"><label for="md_dc_gtgt" style="color:#065f46; font-weight:800;">Số thuế GTGT phải nộp (VNĐ)</label><input type="number" id="md_dc_gtgt" value="0" style="background:#fff; font-weight:700;"></div>
+          </div>
+          <div style="background:#f5f3ff; padding:10px 12px; border-radius:8px; border:1.5px solid #c4b5fd;">
+            <div style="font-size:12px; font-weight:800; color:#5b21b6; margin-bottom:6px;">3. Có nhận hóa đơn nhưng không kê khai thuế</div>
+            <div class="form-group"><label for="md_kkk_so">Số lượng hóa đơn</label><input type="number" id="md_kkk_so" value="0" style="background:#fff;"></div>
+            <div class="form-group"><label for="md_kkk_gt">Tổng giá trị chưa thuế (VNĐ)</label><input type="number" id="md_kkk_gt" value="0" style="background:#fff;"></div>
+            <div class="form-group"><label for="md_kkk_vat">Tiền thuế giá trị gia tăng (VNĐ)</label><input type="number" id="md_kkk_vat" value="0" style="background:#fff;"></div>
+          </div>
+          <div style="background:#fff7ed; padding:10px 12px; border-radius:8px; border:1.5px solid #fdba74;">
+            <div style="font-size:12px; font-weight:800; color:#9a3412; margin-bottom:6px;">4. Không nhận được hóa đơn, không kê khai thuế</div>
+            <div class="form-group"><label for="md_kn_so">Số lượng hóa đơn</label><input type="number" id="md_kn_so" value="0" style="background:#fff;"></div>
+            <div class="form-group"><label for="md_kn_gt">Tổng giá trị chưa thuế (VNĐ)</label><input type="number" id="md_kn_gt" value="0" style="background:#fff;"></div>
+            <div class="form-group"><label for="md_kn_vat">Tiền thuế giá trị gia tăng (VNĐ)</label><input type="number" id="md_kn_vat" value="0" style="background:#fff;"></div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:10px;">
+          <label for="md_kq_phong_b" style="color:#6d28d9;">Ghi chú / Ý kiến phối hợp của Phòng Kiểm tra thuế (nếu có):</label>
+          <input type="text" id="md_kq_phong_b" placeholder="Phòng Kiểm tra ghi nhận kết quả kiểm tra tại trụ sở Người nộp thuế...">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between;">
+      <button type="button" class="btn btn-outline" style="border-color:#3b82f6; color:#1d4ed8; font-weight:700; display:inline-flex; align-items:center; gap:6px;" onclick="downloadRecordBundleZip(document.getElementById('md_id').value)" title="Gom toàn bộ file CVRR, TBGT, GTDN, BBLV, PKT và tóm tắt tiến độ tải về trong 1 file ZIP">
+        📦 Tải Trọn Bộ Hồ Sơ (ZIP)
+      </button>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-outline" onclick="closeDsrrModal()">Đóng [ESC]</button>
+        <button class="btn btn-primary" id="btnSaveDsrrModal" onclick="saveDsrrUpdate()">💾 Lưu Kết quả Cập nhật [Ctrl+S]</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NHẮC VIỆC QUA OUTLOOK (RÀ SOÁT HỒ SƠ CHẬM CẬP NHẬT KẾT QUẢ) -->
+<div class="modal-backdrop" id="outlookReminderModal">
+  <div class="modal-box" style="max-width:1180px;">
+    <div class="panel-header" style="padding:14px 22px; margin:0; background:#0f172a; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:16px; font-weight:800;">📧 Đôn Đốc & Nhắc Việc Qua Hệ Thống Microsoft Outlook</span>
+        <span class="badge" style="background:#f59e0b; color:#0f172a; font-weight:800;" id="modalOverdueBadge">0 hồ sơ chậm</span>
+      </div>
+      <button class="btn btn-outline" style="background:#1e293b; color:#fff; border-color:#475569;" onclick="closeOutlookReminderModal()">Đóng [ESC]</button>
+    </div>
+
+    <div class="modal-body" style="padding:16px 20px; max-height:calc(85vh - 120px); overflow-y:auto;">
+      <!-- KHỐI BỘ LỌC VÀ THỐNG KÊ NHẮC VIỆC -->
+      <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:10px; padding:14px 18px; margin-bottom:14px;">
+        <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;">
+          <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+            <div>
+              <label for="reminderFilterMode" style="font-size:11.5px; font-weight:800; color:#475569; display:block; margin-bottom:3px;">TIÊU CHÍ LỌC HỒ SƠ ĐÔN ĐỐC:</label>
+              <select id="reminderFilterMode" onchange="loadOverdueReminders()" style="padding:7px 10px; font-weight:700; border:1.5px solid #cbd5e1; border-radius:6px; background:#fff;">
+                <option value="OVERDUE_ONLY" selected>⏰ Quá thời hạn Thông báo giải trình (+10 ngày) [Khuyến nghị]</option>
+                <option value="ALL_PENDING">📂 Tất cả hồ sơ chưa hoàn tất</option>
+                <option value="NO_TB">⏳ Chưa ban hành Thông báo giải trình</option>
+                <option value="WITH_TB_VALID">🟢 Đang trong hạn giải trình</option>
+              </select>
+              <input type="hidden" id="reminderDaysThreshold" value="0">
+            </div>
+            <div>
+              <label for="reminderOfficerSelect" style="font-size:11.5px; font-weight:800; color:#475569; display:block; margin-bottom:3px;">LỌC CÁN BỘ PHỤ TRÁCH:</label>
+              <select id="reminderOfficerSelect" onchange="loadOverdueReminders()" style="padding:7px 10px; font-weight:700; border:1.5px solid #cbd5e1; border-radius:6px; background:#fff;">
+                <option value="">-- Tất cả cán bộ --</option>
+              </select>
+            </div>
+            <div style="align-self:flex-end;">
+              <input type="text" id="filterReminderTableInput" placeholder="🔍 Lọc nhanh MST, Tên DN, Cán bộ..." oninput="filterReminderTableRows()" style="padding:7px 12px; border:1.5px solid #cbd5e1; border-radius:6px; font-size:12.5px; width:220px; background:#fff;">
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+            <button class="btn btn-primary" id="btnSendSummaryEmail" onclick="sendOfficerSummaryOutlook()" style="font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+              📨 Mở Outlook gửi Email Tổng hợp
+            </button>
+            <button class="btn btn-outline" onclick="loadOverdueReminders()">🔄 Làm mới</button>
+          </div>
+        </div>
+
+        <!-- 3 THẺ KPI TÓM TẮT -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-top:12px;">
+          <div style="background:#fff; border:1px solid #cbd5e1; border-left:4px solid #ef4444; border-radius:6px; padding:8px 12px;">
+            <div style="font-size:11.5px; color:#64748b; font-weight:700;">HỒ SƠ QUÁ HẠN / CHẬM TIẾN ĐỘ</div>
+            <div style="font-size:20px; font-weight:900; color:#dc2626;" id="statOverdueCount">0</div>
+          </div>
+          <div style="background:#fff; border:1px solid #cbd5e1; border-left:4px solid #f59e0b; border-radius:6px; padding:8px 12px;">
+            <div style="font-size:11.5px; color:#64748b; font-weight:700;">TỔNG HỒ SƠ CHƯA HOÀN THÀNH</div>
+            <div style="font-size:20px; font-weight:900; color:#d97706;" id="statTotalPending">0</div>
+          </div>
+          <div style="background:#fff; border:1px solid #cbd5e1; border-left:4px solid #3b82f6; border-radius:6px; padding:8px 12px;">
+            <div style="font-size:11.5px; color:#64748b; font-weight:700;">CÁN BỘ CÓ HỒ SƠ CHẬM</div>
+            <div style="font-size:20px; font-weight:900; color:#2563eb;" id="statOfficerCount">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BẢNG DANH SÁCH HỒ SƠ CHẬM & NÚT GỬI EMAIL OUTLOOK -->
+      <div class="table-wrap" style="max-height:380px; border:1px solid #cbd5e1; border-radius:8px;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:45px;">STT</th>
+              <th style="width:180px;">Cán bộ xử lý & Email (@gdt.gov.vn)</th>
+              <th style="width:125px;">Mã số thuế</th>
+              <th style="width:210px;">Tên Doanh nghiệp cần xử lý</th>
+              <th style="width:160px;">DN có dấu hiệu rủi ro</th>
+              <th style="width:130px;">Thời gian tồn đọng</th>
+              <th>Tiến độ hiện tại</th>
+              <th style="width:150px; text-align:center;">Thao tác Outlook</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyReminderRows">
+            <!-- Render từ app.js -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- KHỐI XEM TRƯỚC VÀ SAO CHÉP MẪU EMAIL -->
+      <div id="emailPreviewBox" style="margin-top:14px; background:#eff6ff; border:1.5px solid #93c5fd; border-radius:8px; padding:12px 16px; display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <b style="color:#1e40af; font-size:13px;">📝 Xem trước nội dung Email gửi đến Cán bộ qua Outlook:</b>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-primary" id="btnPreviewOpenOutlook" style="padding:4px 10px; font-size:12px;">🚀 Mở ngay trong Outlook</button>
+            <button class="btn btn-outline" id="btnPreviewCopy" style="padding:4px 10px; font-size:12px;">📋 Sao chép nội dung</button>
+            <button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="document.getElementById('emailPreviewBox').style.display='none'">✕ Đóng xem</button>
+          </div>
+        </div>
+        <div style="font-size:12px; margin-bottom:4px;"><b>Gửi đến:</b> <span id="previewToEmail" style="color:#2563eb; font-weight:700;"></span></div>
+        <div style="font-size:12px; margin-bottom:6px;"><b>Tiêu đề:</b> <span id="previewSubject" style="font-weight:700; color:#0f172a;"></span></div>
+        <pre id="previewBody" style="background:#fff; border:1px solid #cbd5e1; border-radius:6px; padding:10px; font-size:12px; color:#1e293b; max-height:180px; overflow-y:auto; font-family:Consolas, monospace; white-space:pre-wrap;"></pre>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="padding:10px 20px; background:#f1f5f9;">
+      <span style="font-size:12px; color:#64748b;">
+        💡 Mẹo: Nhấn nút <b>"📧 Mở Outlook"</b> sẽ tự động bật ứng dụng Microsoft Outlook trên máy tính với người nhận, tiêu đề và nội dung soạn sẵn chuẩn mẫu ngành thuế.
+      </span>
+      <button class="btn btn-outline" onclick="closeOutlookReminderModal()">Đóng [ESC]</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ĐĂNG NHẬP QUẢN TRỊ VIÊN (ADMIN) -->
+<div class="modal-backdrop" id="adminLoginModal">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="panel-header" style="background: linear-gradient(135deg, #881337 0%, #4c0519 100%); color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-weight:800; font-size:15px; display:flex; align-items:center; gap:8px;">
+        <span>🔐</span> Đăng Nhập Quản Trị Viên (Admin)
+      </span>
+      <button class="btn btn-outline" style="background:#9f1239; color:#fff; border-color:#be123c; padding:3px 8px;" onclick="closeAdminLoginModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px;">
+      <div style="font-size:12.5px; color:#475569; margin-bottom:16px; line-height:1.5;">
+        Khu vực Quản trị Hệ thống, Cấu hình Tự động hóa SAP và Giám sát Nhật ký Lưu vết nội bộ chỉ dành riêng cho tài khoản Quản trị viên.
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label for="adminUsernameInput" style="font-weight:700; color:#0f172a; font-size:12.5px; display:block; margin-bottom:5px;">Tài khoản Quản trị:</label>
+        <input type="text" id="adminUsernameInput" value="admin" placeholder="Nhập tên tài khoản..." style="width:100%; font-size:13.5px; font-weight:700; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:6px;" onkeydown="if(event.key==='Enter') document.getElementById('adminPasswordInput').focus()">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label for="adminPasswordInput" style="font-weight:700; color:#0f172a; font-size:12.5px; display:block; margin-bottom:5px;">Mật khẩu xác thực:</label>
+        <input type="password" id="adminPasswordInput" placeholder="Nhập mật khẩu..." style="width:100%; font-size:15px; font-weight:700; padding:8px 10px; border:1.5px solid #cbd5e1; border-radius:6px;" onkeydown="if(event.key==='Enter') submitAdminLogin()">
+      </div>
+      <div id="adminLoginError" style="display:none; color:#e11d48; font-size:12px; font-weight:700; margin-top:8px;"></div>
+    </div>
+    <div class="modal-footer" style="padding:12px 20px; display:flex; justify-content:flex-end; gap:8px;">
+      <button class="btn btn-outline" onclick="closeAdminLoginModal()">Hủy bỏ</button>
+      <button class="btn btn-primary" style="background:#e11d48; border-color:#e11d48; font-weight:700;" onclick="submitAdminLogin()">🔑 Đăng Nhập</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ĐỔI MẬT KHẨU QUẢN TRỊ VIÊN -->
+<div class="modal-backdrop" id="adminChangePassModal">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="panel-header" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-weight:800; font-size:15px; display:flex; align-items:center; gap:8px;">
+        <span>🔑</span> Đổi Mật Khẩu Quản Trị Viên
+      </span>
+      <button class="btn btn-outline" style="background:#334155; color:#fff; border-color:#475569; padding:3px 8px;" onclick="closeChangePasswordModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px;">
+      <div style="font-size:12.5px; color:#475569; margin-bottom:14px; line-height:1.5;">
+        Vui lòng nhập mật khẩu hiện tại và thiết lập mật khẩu mới (tối thiểu 4 ký tự) để bảo vệ hệ thống.
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label for="adminOldPassInput" style="font-weight:700; color:#0f172a; font-size:12px; display:block; margin-bottom:4px;">Mật khẩu hiện tại:</label>
+        <input type="password" id="adminOldPassInput" placeholder="Nhập mật khẩu hiện tại..." style="width:100%; font-size:14px; padding:7px 10px; border:1.5px solid #cbd5e1; border-radius:6px;">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label for="adminNewPassInput" style="font-weight:700; color:#0f172a; font-size:12px; display:block; margin-bottom:4px;">Mật khẩu mới:</label>
+        <input type="password" id="adminNewPassInput" placeholder="Tối thiểu 4 ký tự..." style="width:100%; font-size:14px; padding:7px 10px; border:1.5px solid #cbd5e1; border-radius:6px;">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label for="adminConfirmPassInput" style="font-weight:700; color:#0f172a; font-size:12px; display:block; margin-bottom:4px;">Xác nhận mật khẩu mới:</label>
+        <input type="password" id="adminConfirmPassInput" placeholder="Nhập lại mật khẩu mới..." style="width:100%; font-size:14px; padding:7px 10px; border:1.5px solid #cbd5e1; border-radius:6px;" onkeydown="if(event.key==='Enter') submitChangeAdminPassword()">
+      </div>
+      <div id="adminChangePassError" style="display:none; color:#e11d48; font-size:12px; font-weight:700; margin-top:8px;"></div>
+    </div>
+    <div class="modal-footer" style="padding:12px 20px; display:flex; justify-content:flex-end; gap:8px;">
+      <button class="btn btn-outline" onclick="closeChangePasswordModal()">Hủy bỏ</button>
+      <button class="btn btn-primary" style="background:#2563eb; border-color:#2563eb; font-weight:700;" onclick="submitChangeAdminPassword()">💾 Lưu Mật Khẩu</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL THÊM / SỬA NNT VÀ CÁN BỘ QUẢN LÝ -->
+<div class="modal-backdrop" id="nntEditModal">
+  <div class="modal-box" style="max-width:620px;">
+    <div class="panel-header" style="background:#1e40af; color:#fff; padding:14px 18px;">
+      <span id="nntEditModalTitle" style="font-weight:800; font-size:15px;">Thêm Mới Người Nộp Thuế & Phân Công Cán Bộ Quản Lý</span>
+      <button class="btn btn-outline" style="background:#1e3a8a; color:#fff; border-color:#3b82f6;" onclick="closeNntEditModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:18px 20px;">
+      <div class="form-group" style="margin-bottom:10px;">
+        <label for="mdNntMst" style="color:#dc2626;">Mã số thuế (*) :</label>
+        <input type="text" id="mdNntMst" placeholder="VD: 4300512503" style="font-weight:800;">
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label for="mdNntTen">Tên Người nộp thuế / Doanh nghiệp (*):</label>
+        <input type="text" id="mdNntTen" placeholder="Tên công ty...">
+      </div>
+      <div class="form-grid-2" style="margin-bottom:10px;">
+        <div class="form-group">
+          <label for="mdNntCbql">Cán bộ thuế quản lý:</label>
+          <input type="text" id="mdNntCbql" placeholder="Họ và tên cán bộ thuế..." oninput="autoSuggestOfficerEmail(this.value)">
+        </div>
+        <div class="form-group">
+          <label for="mdNntEmail">Hộp thư điện tử cán bộ (@gdt.gov.vn):</label>
+          <input type="text" id="mdNntEmail" placeholder="VD: bthan.qng@gdt.gov.vn">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="mdNntDiaChi">Địa chỉ trụ sở doanh nghiệp:</label>
+        <input type="text" id="mdNntDiaChi" placeholder="Địa chỉ...">
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:12px 20px;">
+      <button class="btn btn-outline" onclick="closeNntEditModal()">Đóng [ESC]</button>
+      <button class="btn btn-primary" onclick="saveNntRecord()">💾 Lưu Thông Tin Doanh Nghiệp</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORT EXCEL DANH MỤC NNT -->
+<div class="modal-backdrop" id="nntImportModal">
+  <div class="modal-box" style="max-width:680px;">
+    <div class="panel-header" style="background:#065f46; color:#fff; padding:14px 18px;">
+      <span style="font-weight:800; font-size:15px;">📥 Nạp Danh Mục NNT & Cán Bộ Quản Lý Từ File Excel</span>
+      <button class="btn btn-outline" style="background:#047857; color:#fff; border-color:#34d399;" onclick="closeNntImportModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:18px 20px;">
+      <div style="font-size:12.5px; color:#334155; margin-bottom:12px; line-height:1.5;">
+        Hệ thống hỗ trợ nạp file Excel (<code>.xlsx</code>, <code>.xls</code>). Tự động nhận diện các cột: <b>Mã số thuế</b>, <b>Tên Người nộp thuế</b>, <b>Cán bộ quản lý</b>, <b>Hộp thư điện tử cán bộ</b>, <b>Địa chỉ</b>.
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label for="excelImportFileInput" style="font-weight:800; color:#0f172a;">Chọn file Excel từ máy tính (*):</label>
+        <input type="file" id="excelImportFileInput" accept=".xlsx,.xls" style="background:#fff; border:2px dashed #94a3b8; padding:14px; text-align:center;" onchange="handleAdminExcelSelected(this)">
+      </div>
+
+      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 14px; margin-bottom:14px;">
+        <div style="font-size:12.5px; font-weight:800; color:#0f172a; margin-bottom:8px;">Chọn phương thức nạp dữ liệu:</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
+            <input type="radio" name="nntImportMode" value="upsert" checked>
+            <span><b>Cập nhật & Thêm mới (Upsert - Khuyến nghị):</b> Giữ nguyên danh mục hiện có, cập nhật thông tin nếu trùng MST và thêm mới các NNT chưa có.</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
+            <input type="radio" name="nntImportMode" value="replace">
+            <span style="color:#dc2626;"><b>Ghi đè thay thế toàn bộ (Replace all):</b> Xóa sạch danh mục cũ và nạp danh sách mới từ file Excel này.</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="importExcelPreviewAlert" style="display:none; padding:10px 12px; border-radius:6px; font-size:12px; margin-bottom:8px;"></div>
+    </div>
+    <div class="modal-footer" style="padding:12px 20px;">
+      <button class="btn btn-outline" onclick="closeNntImportModal()">Hủy bỏ</button>
+      <button class="btn btn-success" id="btnExecuteNntImport" onclick="executeNntExcelImport()" disabled>🚀 Bắt Đầu Nạp Dữ Liệu</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+<input type="file" id="globalCvrrFileInput" accept=".pdf" style="display:none;" onchange="onGlobalCvrrFileSelected(this)">
+</body>
+</html>
